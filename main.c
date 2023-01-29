@@ -1,63 +1,62 @@
-// CECILIA RAMOS
 #include "lib/include.h"
 
-int main(void)
-{
-    uint16_t valor = 0;
-    char c='5';
-    //char b='a';
-    Configurar_PLL();  //Confiuracion de velocidad de reloj
-    Configurar_UART0();      //Yo FCLK 40MHZ Baudrate 28800
 
     //Experimento 1
     //  Configurar_UART1(); //Jorge,Alberto,Navarro,Saul,Fabela -fclk 25MHZ Baud-rate 57600
     //  Configurar_UART7(); //Angel,Fernanda,Sonia,Aleidis,Monse -fclk 50MHZ Baud-rate 57600
     //  Configurar_UART4(); //Argelia,Roxana,Yesica,Vanesa,Christian,Abiu -fclk 10MHZ Baud-rate 4800
     //  Configurar_UART2(); //Brizet,Monse,Luis,Majo,Alonso -fclk 40MHZ Baud-rate 115200
-    //  Configurar_UART3(); //Jesus,Yesica,Carlos,Dulce,Rodolfo,Leonardo -fclk 80MHZ Baud-rate 19200
+    //  Configurar_UART3(); //Jesus,Yesica,Carlos,Dulce,Rodolfo,Leonardo -fclk g Baud-rate 19200
     //  Configurar_UART2(); //Andrea,Avila,Pamela,Paulina -fclk 50MHZ Baud-rate 57600
     //  Configurar_UART5(); //Hector,Cecilia,Carolina,Jozzafat -fclk 40MHZ Baud-rate 28800
+
+int main(void)
+{
+    uint16_t valor = 0;
+    char c = '5';
+
+    int size_string = 10;
+    char new_name[size_string]; 
+
+    Configurar_PLL(_50MHZ);  // Velocidad de reloj (Include.h)
+    Configurar_UART5();
     Configurar_GPIO();
-   // Homogeneidad();
-    //printString("Holis Bolis");
     printChar(c);
-    //printChar(b);
     printString("\n");
-   // char *arr = readString(',');
-   // printString(&arr[0]);
+
     while(1)
     {
          c = readChar();
          switch(c)
          {
-             case 'r':
+            case 'r':
                  //GPIODATA port F 662
-                 printChar('a');        // Envía e imprime 'a'
-                 GPIOF_AHB->DATA = (1<<4) | (0<<0);
-                 GPION->DATA = (0<<0) | (0<<1);
+                 printChar('a');
+                 GPIOF->DATA = (1<<1);
                  break;
-             case 'b':
+            case 'b':
                  //GPIODATA port F 662
                  printChar('b');
-                 GPIOF_AHB->DATA = (1<<0) | (0<<4);
-                 GPION->DATA = (0<<0) | (0<<1);
+                 GPIOF->DATA = (1<<2);
                  break;
-             case 'g':
+            case 'g':
                  //GPIODATA port F 662
                  printChar('c');
-                 GPION->DATA = (1<<0) | (0<<1);
-                 GPIOF_AHB->DATA = (0<<4) | (0<<0);
+                 GPIOF->DATA = (1<<3);
                  break;
-             case 'y':
+            case 'y':
                  //GPIODATA port F 662
                  printChar('d');
-                 GPION->DATA = (1<<1) | (0<<0);
-                 GPIOF_AHB->DATA = (0<<4) | (0<<0);
+                 GPIOF->DATA = (1<<3) | (1<<2);
                  break;
-             default:
+            case 'i' : // i de invertir
+                 GPIOF->DATA = (1<<1) | (1<<2) | (1<<3);
+                 printString(&new_name[0]); 
+                 break;    
+            
+            default:
                  printChar((char)valor);
-                 GPIOF_AHB->DATA = (0<<4) | (0<<0);
-                 GPION->DATA = (0<<1) | (0<<0);
+                 GPIOF->DATA = (0<<1) | (0<<2) | (0<<3);
                  break;
          }
     }

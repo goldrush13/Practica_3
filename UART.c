@@ -1,58 +1,103 @@
-// CECILIA RAMOS
 #include "lib/include.h"
 
-// MI configuración UART5 que corresponde al PC6(23Rx) y PC7(22Tx) pp. 1164
-extern void Configurar_UART0(void)
+// MI configuración UART5 que corresponde al PE4(59Rx) y PE5(60Tx)
+
+extern void Configurar_UART5(void)
 {
     ///////////////////  CONFIGURACIÓN PINES /////////////////////
     // Habilitar RELOJES <UART> y <GPIO> con REGISTROS
-    SYSCTL->RCGCUART  = (1<<5);           //Paso 1 (RCGCUART) pag.388 UART/modulo5 0->Disable 1->Enable
-    SYSCTL->RCGCGPIO |= (1<<2);           //Paso 2 (RCGCGPIO) pag.382 Enable clock port C
+    SYSCTL->RCGCUART  = (1<<5);     //Paso 1 (RCGCUART) pag.344 UART/modulo0 0->Disable 1->Enable
+    SYSCTL->RCGCGPIO |= (1<<4);     //Paso 2 (RCGCGPIO) pag.340 Enable clock port E
     
-    //(GPIOAFSEL) pag.770 Enable alternate function
-    GPIOC_AHB->AFSEL = (1<<7) | (1<<6);   // Habilita función alternativa en el pin C6 y C7 pag.787 PIN 6 (recepcion) y PIN 7 (transmisión)
+    //(GPIOAFSEL) pag.671 Enable alternate function
+    GPIOE->AFSEL = (1<<4) | (1<<5); // Habilita función alternativa en el pin E4 y E5
     
     //GPIO Port Control (GPIOPCTL) to assign the UART signals to the appropriate pins
-    //PC6-> U5Rx PC7-> U5Tx pag.1808                                  
+    //PE4-> U5Rx PE5-> U5Tx                                 
     //GPIOA_AHB->PCTL = (GPIOA_AHB->PCTL&0xFFFFFF00) | 0x00000011;// (1<<0) | (1<<4);//0x00000011
-    GPIOC_AHB->PCTL =  (1<<20) | (1<<24);   //Indica pin 6 y 7 funcionan como UART pag. 787
+
+    GPIOE->PCTL =  0x00110000;// (1<<5) | (1<<4);//0x00000011
     
-    // GPIO Digital Enable (GPIODEN) pag.781
-    GPIOC_AHB->DEN = (1<<6) | (1<<7);      //PC6 PC7 habilito como digitales
+    // GPIO Digital Enable (GPIODEN) pag.682
+    GPIOE->DEN = (1<<4) | (1<<5);  //PE4 PE5
     
-    
-    
+
     /////////////////// CONFIGURACIÓN UART /////////////////////
-    //UART0 UART Control (UARTCTL) pag.1188 DISABLE!!
-    UART5->CTL = (0<<9) | (0<<8) | (0<<0);      // Deshabilito UARTEN, TXE, RXE
+    //UART Control (UARTCTL) pag.918 DISABLE!!
+    UART5->CTL = (0<<9) | (0<<8) | (0<<0);
     //            RXE       TXE    UARTEN (UARTENable)
 
-    // UART Integer Baud-Rate Divisor (UARTIBRD) pag.1172
+    // UART Integer Baud-Rate Divisor (UARTIBRD) pag.914
     /*
     BRD = 20,000,000 / (16 * 9600) = 130.2
         = 40,000,000 / (16 * 28800) = 86.805
 
     UARTFBRD[DIVFRAC] = integer(0.2 * 64 + 0.5) = 14
                                (0.805 * 64 + 0.5) = 52.02
+
     */
     UART5->IBRD = 86;
     
-    // UART Fractional Baud-Rate Divisor (UARTFBRD) pag.1172
+    // UART Fractional Baud-Rate Divisor (UARTFBRD) pag.915
     UART5->FBRD = 52;
     
-    //  UART Line Control (UARTLCRH) pag.1186 Serial parameters such as data length, parity, and stop bit selection are implemented in this register.
-    UART5->LCRH = (0x3<<5);      //PARA TENER 8 bits(0x3 pp 1186)
+    //  UART Line Control (UARTLCRH) pag. 916 Serial parameters such as data length, parity, and stop bit selection are implemented in this register.
+    UART5->LCRH = (0x3<<5);      //PARA TENER 8 bits(0x3)
     //UART5->LCRH = (0x3<<5)|(1<<4);  |(1<<4) activar el bit de paridad pero solo se emplea con el uart0
     
-    //  UART Clock Configuration(UARTCC) pag.1213
-    UART5->CC =(0<<0);         //usaremos el reloj PRINCIPAL
+    //  UART Clock Configuration(UARTCC) pag.939
+    UART5->CC =(0<<0);      //usaremos el reloj PRINCIPAL
     
-    //Disable UART0 UART Control (UARTCTL) pag.1188
-    UART5->CTL = (1<<9) | (1<<8) | (1<<0);
+    //Disable UART0 UART Control (UARTCTL) pag.918
+    UART5->CTL = (1<<0) | (1<<8) | (1<<9);
     //            RXE       TXE      UARTEN
+
+
 
 }
 
+
+extern char readChar(void)
+{
+    //UART FR flag pag 911
+    //UART DR data 906
+    int v;
+    char c;
+    while((UART5->FR & (1<<4)) != 0 );
+    v = UART5->DR & 0xFF;
+    c = v;
+    return c;
+}
+extern void printChar(char c)
+{
+    while((UART5->FR & (1<<5)) != 0 );
+    UART5->DR = c;
+}
+extern void printString(char* string)
+{
+    int i = 0;
+    while(string[i] > 47)
+    {
+        printChar(string[i]);
+        i++;
+    }
+}
+
+extern int readString(char delimitador, char *string)
+{
+
+   int i = 0;
+   char c = readChar();
+   while(c != delimitador)
+   {
+       string[i] = c;
+       i++;
+       c = readChar();
+   }
+
+    return i;
+
+}
 
 //Experimento 2
 
@@ -61,74 +106,47 @@ extern void Configurar_UART0(void)
 // invertirlo y regresarlo con numeros consecutivos
 // entre letras (e1v2a3r) 
 
-
-/////// LEEMOS N CARACTER
-extern char readChar(void)          
+extern void invertir_nombre(char *new_name, int size_string)
 {
-    //UART FR flag pag 1180
-    //UART DR data 1175
-    int v;      // BANDERA
-    char c;
-    while((UART5->FR & (1<<4)) != 0 );          // Se mantiene en el ciclo cuando no llega un dato 
-    v = UART5->DR & 0xFF;               //DR - registro del dato y 0xff es la mascara 
-    c = v;                          // Convierte el entero a caracter
-    return c;
-}
+int x = 1;         // Contador de números (sin contar el 0)
+int y = 0;         // Contador números en arreglo
 
+int i = 1;         // Contador cadena de letras
 
-//////// LEEMOS UNA CADENA 
-extern char * readString(char delimitador)  
-{
+int flag = 0; 
+int size;          // Longitud cadena
+size = size_string;
+   
 
-   int i=0;
-   char *string = (char *)calloc(10,sizeof(char));
-   char c = readChar();
-   while(c != delimitador)
-   {
-       *(string+i) = c;
-       i++;
-       if(i%10==0)
-       {
-           string = realloc(string,(i+10)*sizeof(char));
-       }
-       c = readChar();
-   }
-
-   return string;
-
-}
-
-///////// ENVIAMOS CARACTER
-extern void printChar(char c)           
-{
-    while((UART5->FR & (1<<5)) != 0 );    // ¿La posición 5 esta desocupada? SI = continua con la linea de datos y transmite  
-    UART5->DR = c;                                
-}
-
-/////////// ENVIAMOS CADENA
-extern void printString(char* string)       
-{
-    while(*string)                         // String es la direccion de memoria PARA LA CADENA para saber si esta vacía, si esta vacia se sale del ciclo
+if (size_string < 10) // memoria para 10
+    size_string = size_string + (size_string - 1);  
+    
+    else
     {
-        printChar(*(string++));
-    }
-    printChar('\n');
-}
+        size_string = 18 + ((size_string - 9)*3);
+    }    
+        char name[size_string];  
 
-////////// INVERTIMOS CADENA
-extern char * invertir(char *str)
+while (i < size_string) 
 {
-    uint32_t n = strlen(str);
-    uint32_t i = 0;
-    char *inv = (char*)calloc(10,sizeof(char));
-
-    while(i<n)
+    if (flag == 0 )
     {
-        *(inv + (n-i-1)) * str[i];
-
+	    name[y] = new_name[size - i]; // para las posiciones de las letras
+	    i = i+1;
+	    y = y+1;
+        flag = 1; // sino no entra al else
     }
-    return inv;
+
+
+}
+
+for (int j=0; j <= (size_string - 1); j++)
+    {
+        new_name[j] = name[j];
+    }
+
+return;
 }
 
 
-// calloc y realloc son funciones de memoria
+
