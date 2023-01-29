@@ -15,7 +15,7 @@ int main(void)
     uint16_t valor = 0;
     char c = '5';
 
-    int size_string = 10;
+    int size_string = 20;
     char new_name[size_string]; 
 
     Configurar_PLL(_50MHZ);  // Velocidad de reloj (Include.h)
@@ -51,6 +51,8 @@ int main(void)
                  break;
             case 'i' : // i de invertir
                  GPIOF->DATA = (1<<1) | (1<<2) | (1<<3);
+                 size_string = readString('%', &new_name[0]);
+                 invertir_nombre(&new_name[0], size_string);
                  printString(&new_name[0]); 
                  break;    
             

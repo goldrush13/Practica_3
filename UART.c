@@ -136,7 +136,14 @@ while (i < size_string)
 	    y = y+1;
         flag = 1; // sino no entra al else
     }
-
+    
+    else
+    {
+        flag = 0;
+        name[y] = x;
+        x = x+1;
+        y = y+1;
+    }
 
 }
 
