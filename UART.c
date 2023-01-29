@@ -140,7 +140,7 @@ while (i < size_string)
     else
     {
         flag = 0;
-        name[y] = x;
+        name[y] = x +'0';
         x = x+1;
         y = y+1;
     }
@@ -151,6 +151,9 @@ for (int j=0; j <= (size_string - 1); j++)
     {
         new_name[j] = name[j];
     }
+
+for (int n = size_string ;n <=20; n++)
+    new_name[n] = 0;
 
 return;
 }
